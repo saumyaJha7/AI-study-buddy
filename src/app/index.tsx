@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Pressable,
   RefreshControl,
   StyleSheet,
   View,
@@ -26,10 +27,28 @@ export default function HomeScreen() {
 
   const fetchInstruments = useCallback(async () => {
     try {
-      const { data, error: queryError } = await supabase
+      const fetchPromise = supabase
         .from('instruments')
         .select('*')
         .order('id', { ascending: true });
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(
+          () =>
+            reject(
+              new Error(
+                'Request timed out. Check your phone internet connection and Supabase URL.'
+              )
+            ),
+          10000
+        )
+      );
+
+      const result = await Promise.race([fetchPromise, timeoutPromise]);
+      const { data, error: queryError } = result as {
+        data: Instrument[] | null;
+        error: { message: string } | null;
+      };
 
       if (queryError) {
         setError(queryError.message);
@@ -67,7 +86,7 @@ export default function HomeScreen() {
             Instruments
           </ThemedText>
           <ThemedText type="small" style={styles.subtitle}>
-            Data fetched from Supabase
+            Connected to Supabase
           </ThemedText>
         </ThemedView>
 
@@ -75,7 +94,7 @@ export default function HomeScreen() {
           <View style={styles.centered}>
             <ActivityIndicator size="large" />
             <ThemedText type="small" style={styles.stateText}>
-              Loading instruments...
+              Loading instruments from Supabase...
             </ThemedText>
           </View>
         ) : error ? (
@@ -86,9 +105,16 @@ export default function HomeScreen() {
             <ThemedText type="small" style={styles.errorText}>
               {error}
             </ThemedText>
-            <ThemedText type="code" style={styles.hintText}>
-              Verify your Supabase credentials in .env and check that the instruments table exists.
-            </ThemedText>
+            <Pressable
+              style={styles.retryButton}
+              onPress={() => {
+                setLoading(true);
+                fetchInstruments();
+              }}>
+              <ThemedText type="smallBold" style={styles.retryText}>
+                Tap to Retry
+              </ThemedText>
+            </Pressable>
           </ThemedView>
         ) : (
           <FlatList
@@ -194,10 +220,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#e5484d',
   },
-  hintText: {
-    marginTop: Spacing.two,
-    textAlign: 'center',
-    fontSize: 11,
+  retryButton: {
+    marginTop: Spacing.three,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.two,
+    backgroundColor: '#0a7ea4',
+    borderRadius: Spacing.two,
+  },
+  retryText: {
+    color: '#ffffff',
   },
   stateText: {
     textAlign: 'center',

@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -11,6 +11,15 @@ const DURATION = 600;
 export function AnimatedSplashOverlay() {
   const [animate, setAnimate] = useState(false);
   const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    // Guaranteed failsafe: dismiss the splash overlay and native splash after 600ms
+    SplashScreen.hideAsync().catch(() => {});
+    const timer = setTimeout(() => {
+      setVisible(false);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, []);
 
   if (!visible) return null;
 
