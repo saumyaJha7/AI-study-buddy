@@ -1,61 +1,126 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
+import { supabase } from '@/lib/supabase';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+type Instrument = {
+  id: number;
+  name: string;
+};
 
 export default function HomeScreen() {
+  const [instruments, setInstruments] = useState<Instrument[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchInstruments = useCallback(async () => {
+    try {
+      const { data, error: queryError } = await supabase
+        .from('instruments')
+        .select('*')
+        .order('id', { ascending: true });
+
+      if (queryError) {
+        setError(queryError.message);
+      } else {
+        setError(null);
+        setInstruments(data ?? []);
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to fetch instruments');
+      }
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchInstruments();
+  }, [fetchInstruments]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchInstruments();
+  }, [fetchInstruments]);
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
+        <ThemedView style={styles.header}>
           <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
+            Instruments
+          </ThemedText>
+          <ThemedText type="small" style={styles.subtitle}>
+            Data fetched from Supabase
           </ThemedText>
         </ThemedView>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
+        {loading ? (
+          <View style={styles.centered}>
+            <ActivityIndicator size="large" />
+            <ThemedText type="small" style={styles.stateText}>
+              Loading instruments...
+            </ThemedText>
+          </View>
+        ) : error ? (
+          <ThemedView type="backgroundElement" style={styles.messageBox}>
+            <ThemedText type="subtitle" style={styles.errorTitle}>
+              Error loading instruments
+            </ThemedText>
+            <ThemedText type="small" style={styles.errorText}>
+              {error}
+            </ThemedText>
+            <ThemedText type="code" style={styles.hintText}>
+              Verify your Supabase credentials in .env and check that the instruments table exists.
+            </ThemedText>
+          </ThemedView>
+        ) : (
+          <FlatList
+            data={instruments}
+            keyExtractor={(item) => item.id.toString()}
+            style={styles.list}
+            contentContainerStyle={
+              instruments.length === 0 ? styles.emptyContainer : styles.listContent
+            }
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            renderItem={({ item }) => (
+              <ThemedView type="backgroundElement" style={styles.itemCard}>
+                <ThemedText type="subtitle" style={styles.itemName}>
+                  {item.name}
+                </ThemedText>
+                <ThemedText type="code" style={styles.itemId}>
+                  ID: {item.id}
+                </ThemedText>
+              </ThemedView>
+            )}
+            ListEmptyComponent={
+              <ThemedView type="backgroundElement" style={styles.messageBox}>
+                <ThemedText type="subtitle">No instruments found</ThemedText>
+                <ThemedText type="small" style={styles.stateText}>
+                  Pull down to refresh after inserting rows in Supabase.
+                </ThemedText>
+              </ThemedView>
+            }
           />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
+        )}
       </SafeAreaView>
     </ThemedView>
   );
@@ -64,35 +129,78 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
   },
   safeArea: {
     flex: 1,
     paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
   },
-  heroSection: {
+  header: {
+    paddingVertical: Spacing.three,
     alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
   },
   title: {
+    fontSize: 32,
+    lineHeight: 38,
+  },
+  subtitle: {
+    marginTop: 4,
+    opacity: 0.7,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    gap: Spacing.two,
+    paddingBottom: Spacing.four,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  itemCard: {
+    padding: Spacing.three,
+    borderRadius: Spacing.two,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  itemName: {
+    fontSize: 18,
+    lineHeight: 24,
+    textTransform: 'capitalize',
+  },
+  itemId: {
+    opacity: 0.6,
+  },
+  messageBox: {
+    padding: Spacing.four,
+    borderRadius: Spacing.three,
+    alignItems: 'center',
+    gap: Spacing.two,
+    marginTop: Spacing.four,
+  },
+  errorTitle: {
+    fontSize: 18,
+    lineHeight: 24,
+    color: '#e5484d',
+  },
+  errorText: {
     textAlign: 'center',
+    color: '#e5484d',
   },
-  code: {
-    textTransform: 'uppercase',
+  hintText: {
+    marginTop: Spacing.two,
+    textAlign: 'center',
+    fontSize: 11,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  stateText: {
+    textAlign: 'center',
+    marginTop: Spacing.one,
   },
 });
