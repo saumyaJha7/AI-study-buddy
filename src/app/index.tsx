@@ -1,125 +1,290 @@
+import { useState } from 'react';
 import {
-  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import Feather from '@expo/vector-icons/Feather';
 
 import { AuthForm } from '@/components/auth-form';
 import { useAuth } from '@/context/auth-context';
 
-const FEATURES = [
-  {
-    id: 'ai-tutor',
-    icon: '🤖',
-    title: 'Ask AI Tutor',
-    description: 'Break down complex concepts and get instant step-by-step answers.',
-  },
-  {
-    id: 'flashcards',
-    icon: '📇',
-    title: 'Flashcards & Decks',
-    description: 'Create and review smart flashcards powered by spaced repetition.',
-  },
-  {
-    id: 'notes',
-    icon: '📝',
-    title: 'Study Notes',
-    description: 'Organize your subjects, upload documents, and generate summaries.',
-  },
-  {
-    id: 'quiz',
-    icon: '⚡',
-    title: 'Practice Quizzes',
-    description: 'Test your understanding with AI-generated practice questions.',
-  },
-];
+type Tab = 'library' | 'settings';
+
+interface StudySet {
+  id: string;
+  title: string;
+  updatedAt: string;
+}
 
 export default function HomeScreen() {
-  const { session, user, loading, signOut } = useAuth();
+  const insets = useSafeAreaInsets();
+  const { session, user, signOut } = useAuth();
 
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#3b82f6" />
-          <Text style={styles.loadingText}>Connecting to Supabase Auth...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const [activeTab, setActiveTab] = useState<Tab>('library');
 
-  // If not authenticated, render the Auth Form
-  if (!session || !user) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView
-          contentContainerStyle={styles.authContainer}
-          keyboardShouldPersistTaps="handled">
-          <AuthForm />
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
+  // Study sets collection - empty by default as requested:
+  // "in place of os1 , operating system and Os card .. make the place empty"
+  const [studySets, setStudySets] = useState<StudySet[]>([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
 
-  // Authenticated State: AI Study Buddy Dashboard
+  const handleCreateStudySet = () => {
+    const trimmed = newTitle.trim();
+    if (!trimmed) return;
+
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    const formattedDate = `${day}/${month}/${year}`;
+
+    const newSet: StudySet = {
+      id: Date.now().toString(),
+      title: trimmed,
+      updatedAt: formattedDate,
+    };
+
+    setStudySets((prev) => [newSet, ...prev]);
+    setNewTitle('');
+    setIsModalVisible(false);
+  };
+
+  const handleDeleteStudySet = (id: string) => {
+    setStudySets((prev) => prev.filter((item) => item.id !== id));
+  };
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}>
-        {/* Top User Bar */}
-        <View style={styles.userBar}>
-          <View style={styles.userInfo}>
-            <View style={styles.statusDot} />
-            <Text style={styles.userEmail} numberOfLines={1}>
-              {user.email}
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <View style={styles.container}>
+        {/* Main Content Area */}
+        {activeTab === 'library' ? (
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}>
+            {/* Top Header */}
+            <View style={styles.headerRow}>
+              <Text style={styles.headerTitle}>Library</Text>
+            </View>
+
+            {/* Motivational / Hero Heading */}
+            <Text style={styles.heroText}>
+              {'A space for your next\nbreakthrough.'}
             </Text>
-          </View>
+
+            {/* Section Subheading */}
+            <Text style={styles.sectionSubtitle}>Your study collections</Text>
+
+            {/* Description */}
+            <Text style={styles.descriptionText}>
+              {'Upload materials, generate summaries,\nflashcards, and chat with your notes.'}
+            </Text>
+
+            {/* Primary Action Button */}
+            <Pressable
+              style={({ pressed }) => [
+                styles.primaryButton,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={() => setIsModalVisible(true)}>
+              <Text style={styles.primaryButtonText}>New study set</Text>
+            </Pressable>
+
+            {/* Collections List Area:
+                Empty by default ("in place of os1 , operating system and Os card .. make the place empty").
+                If the user creates study sets via the button, they render with the exact matching card style. */}
+            <View style={styles.collectionsContainer}>
+              {studySets.map((set) => (
+                <View key={set.id} style={styles.studyCard}>
+                  <View style={styles.cardContent}>
+                    <Text style={styles.cardTitle}>{set.title}</Text>
+                    <Text style={styles.cardUpdated}>
+                      Updated {set.updatedAt}
+                    </Text>
+                  </View>
+                  <Pressable
+                    hitSlop={12}
+                    onPress={() => handleDeleteStudySet(set.id)}
+                    style={({ pressed }) => [
+                      styles.deleteButton,
+                      pressed && { opacity: 0.6 },
+                    ]}>
+                    <Feather name="trash-2" size={16} color="#64748b" />
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+        ) : (
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}>
+            {/* Settings Screen */}
+            <View style={styles.headerRow}>
+              <Text style={styles.headerTitle}>Settings</Text>
+            </View>
+
+            {session && user ? (
+              <View style={styles.settingsCard}>
+                <Text style={styles.settingsCardBadge}>Authenticated</Text>
+                <Text style={styles.settingsCardLabel}>Account Email</Text>
+                <Text style={styles.settingsCardValue}>{user.email}</Text>
+
+                <Text style={[styles.settingsCardLabel, { marginTop: 12 }]}>
+                  User ID
+                </Text>
+                <Text style={styles.settingsCardMono}>{user.id}</Text>
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.signOutButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                  onPress={signOut}>
+                  <Feather name="log-out" size={16} color="#f87171" />
+                  <Text style={styles.signOutButtonText}>Sign Out</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <View style={styles.authWrapper}>
+                <AuthForm />
+              </View>
+            )}
+
+            <View style={styles.aboutCard}>
+              <Text style={styles.aboutTitle}>AI Study Buddy</Text>
+              <Text style={styles.aboutSubtitle}>
+                Version 1.0.0 • Mobile-first learning companion
+              </Text>
+            </View>
+          </ScrollView>
+        )}
+
+        {/* Bottom Navigation Bar */}
+        <View
+          style={[
+            styles.bottomBar,
+            { paddingBottom: Math.max(insets.bottom, 12) },
+          ]}>
+          {/* Library Tab */}
           <Pressable
-            style={({ pressed }) => [
-              styles.signOutButton,
-              pressed && styles.signOutButtonPressed,
-            ]}
-            onPress={signOut}>
-            <Text style={styles.signOutText}>Sign Out</Text>
+            style={styles.tabItem}
+            onPress={() => setActiveTab('library')}>
+            <View
+              style={[
+                styles.tabIconPill,
+                activeTab === 'library' && styles.tabIconPillActive,
+              ]}>
+              <Feather
+                name="book-open"
+                size={20}
+                color={activeTab === 'library' ? '#F5C29E' : '#8E988D'}
+              />
+            </View>
+            <Text
+              style={[
+                styles.tabLabel,
+                activeTab === 'library'
+                  ? styles.tabLabelActive
+                  : styles.tabLabelInactive,
+              ]}>
+              Library
+            </Text>
+          </Pressable>
+
+          {/* Settings Tab */}
+          <Pressable
+            style={styles.tabItem}
+            onPress={() => setActiveTab('settings')}>
+            <View
+              style={[
+                styles.tabIconPill,
+                activeTab === 'settings' && styles.tabIconPillActive,
+              ]}>
+              <Feather
+                name="settings"
+                size={20}
+                color={activeTab === 'settings' ? '#F5C29E' : '#8E988D'}
+              />
+            </View>
+            <Text
+              style={[
+                styles.tabLabel,
+                activeTab === 'settings'
+                  ? styles.tabLabelActive
+                  : styles.tabLabelInactive,
+              ]}>
+              Settings
+            </Text>
           </Pressable>
         </View>
 
-        {/* Hero Section */}
-        <View style={styles.header}>
-          <Text style={styles.title}>AI Study Buddy</Text>
-          <Text style={styles.subtitle}>
-            Your intelligent personal companion for smarter, faster learning.
-          </Text>
-        </View>
+        {/* Modal for Creating New Study Set */}
+        <Modal
+          animationType="fade"
+          transparent
+          visible={isModalVisible}
+          onRequestClose={() => setIsModalVisible(false)}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={styles.modalOverlay}>
+            <Pressable
+              style={styles.modalBackdrop}
+              onPress={() => setIsModalVisible(false)}
+            />
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>New Study Set</Text>
+              <Text style={styles.modalSubtitle}>
+                Give your new study collection a title to get started.
+              </Text>
 
-        {/* User Account Info Card */}
-        <View style={styles.accountCard}>
-          <Text style={styles.accountCardTitle}>Authenticated via Supabase</Text>
-          <Text style={styles.accountCardText}>
-            User ID: <Text style={styles.accountCardMono}>{user.id}</Text>
-          </Text>
-          <Text style={styles.accountCardSub}>
-            Account stored securely in Supabase <Text style={styles.accountCardMono}>auth.users</Text>
-          </Text>
-        </View>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="e.g. Operating Systems"
+                placeholderTextColor="#64748b"
+                value={newTitle}
+                onChangeText={setNewTitle}
+                autoFocus
+                returnKeyType="done"
+                onSubmitEditing={handleCreateStudySet}
+              />
 
-        {/* Study Features */}
-        <View style={styles.grid}>
-          {FEATURES.map((feature) => (
-            <View key={feature.id} style={styles.card}>
-              <Text style={styles.cardIcon}>{feature.icon}</Text>
-              <Text style={styles.cardTitle}>{feature.title}</Text>
-              <Text style={styles.cardDescription}>{feature.description}</Text>
+              <View style={styles.modalActions}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.modalCancelButton,
+                    pressed && { opacity: 0.7 },
+                  ]}
+                  onPress={() => {
+                    setNewTitle('');
+                    setIsModalVisible(false);
+                  }}>
+                  <Text style={styles.modalCancelText}>Cancel</Text>
+                </Pressable>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.modalCreateButton,
+                    pressed && styles.buttonPressed,
+                    !newTitle.trim() && { opacity: 0.5 },
+                  ]}
+                  disabled={!newTitle.trim()}
+                  onPress={handleCreateStudySet}>
+                  <Text style={styles.modalCreateText}>Create</Text>
+                </Pressable>
+              </View>
             </View>
-          ))}
-        </View>
-      </ScrollView>
+          </KeyboardAvoidingView>
+        </Modal>
+      </View>
     </SafeAreaView>
   );
 }
@@ -127,139 +292,289 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0f172a',
-  },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  loadingText: {
-    color: '#94a3b8',
-    fontSize: 14,
-  },
-  authContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 20,
+    backgroundColor: '#0d0f11',
   },
   container: {
+    flex: 1,
+    backgroundColor: '#0d0f11',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 40,
-    gap: 20,
+    paddingBottom: 24,
   },
-  userBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#1e293b',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#334155',
+  headerRow: {
+    marginBottom: 28,
   },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
-    marginRight: 10,
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#ffffff',
+    letterSpacing: -0.3,
   },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#10b981',
-  },
-  userEmail: {
-    color: '#cbd5e1',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  signOutButton: {
-    backgroundColor: '#334155',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  signOutButtonPressed: {
-    opacity: 0.7,
-  },
-  signOutText: {
-    color: '#f8fafc',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  header: {
-    gap: 8,
-    marginTop: 4,
-  },
-  title: {
+  heroText: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: '#ffffff',
+    lineHeight: 38,
     letterSpacing: -0.5,
   },
-  subtitle: {
+  sectionSubtitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#8c929a',
+    marginTop: 24,
+  },
+  descriptionText: {
     fontSize: 15,
-    color: '#94a3b8',
     lineHeight: 22,
+    color: '#d0d4dc',
+    marginTop: 8,
+    marginBottom: 24,
   },
-  accountCard: {
-    backgroundColor: '#1e293b',
+  primaryButton: {
+    backgroundColor: '#F5C29E',
+    height: 52,
     borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#334155',
-    gap: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#F5C29E',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  accountCardTitle: {
-    color: '#10b981',
-    fontSize: 12,
+  primaryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#151618',
+  },
+  buttonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.99 }],
+  },
+  collectionsContainer: {
+    marginTop: 20,
+    minHeight: 40,
+  },
+  studyCard: {
+    backgroundColor: '#1b1e22',
+    borderRadius: 18,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    marginBottom: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#24282f',
+  },
+  cardContent: {
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: 19,
+    fontWeight: '700',
+    color: '#ffffff',
+    letterSpacing: -0.3,
+  },
+  cardUpdated: {
+    fontSize: 13,
+    color: '#7c838d',
+    marginTop: 6,
+  },
+  deleteButton: {
+    padding: 8,
+    marginLeft: 12,
+  },
+  settingsCard: {
+    backgroundColor: '#1b1e22',
+    borderRadius: 18,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#24282f',
+    marginBottom: 16,
+  },
+  settingsCardBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#132e22',
+    color: '#34d399',
+    fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginBottom: 14,
   },
-  accountCardText: {
-    color: '#e2e8f0',
-    fontSize: 13,
-  },
-  accountCardSub: {
-    color: '#64748b',
+  settingsCardLabel: {
     fontSize: 12,
-    marginTop: 2,
+    fontWeight: '600',
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
   },
-  accountCardMono: {
-    fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }),
-    color: '#93c5fd',
-  },
-  grid: {
-    gap: 12,
-    marginTop: 4,
-  },
-  card: {
-    backgroundColor: '#1e293b',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#334155',
-    gap: 6,
-  },
-  cardIcon: {
-    fontSize: 26,
-    marginBottom: 2,
-  },
-  cardTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+  settingsCardValue: {
+    fontSize: 15,
+    fontWeight: '600',
     color: '#f1f5f9',
   },
-  cardDescription: {
-    fontSize: 13,
+  settingsCardMono: {
+    fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }),
+    fontSize: 12,
+    color: '#93c5fd',
+  },
+  signOutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#291b1f',
+    borderRadius: 12,
+    paddingVertical: 12,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#451a24',
+  },
+  signOutButtonText: {
+    color: '#f87171',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  authWrapper: {
+    marginBottom: 20,
+  },
+  aboutCard: {
+    backgroundColor: '#15171b',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#20242a',
+  },
+  aboutTitle: {
+    fontSize: 14,
+    fontWeight: '700',
     color: '#94a3b8',
+    marginBottom: 2,
+  },
+  aboutSubtitle: {
+    fontSize: 12,
+    color: '#64748b',
+    textAlign: 'center',
+  },
+  bottomBar: {
+    backgroundColor: '#101411',
+    borderTopWidth: 1,
+    borderTopColor: '#171c18',
+    paddingTop: 8,
+    paddingHorizontal: 28,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  tabItem: {
+    alignItems: 'center',
+    minWidth: 84,
+  },
+  tabIconPill: {
+    width: 64,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  tabIconPillActive: {
+    backgroundColor: '#283627',
+  },
+  tabLabel: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+  tabLabelActive: {
+    color: '#F5C29E',
+    fontWeight: '600',
+  },
+  tabLabelInactive: {
+    color: '#8E988D',
+    fontWeight: '500',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    paddingHorizontal: 20,
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFill,
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: '#1b1e22',
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#2c313a',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginBottom: 6,
+  },
+  modalSubtitle: {
+    fontSize: 13,
+    color: '#8a9099',
+    marginBottom: 18,
     lineHeight: 18,
+  },
+  modalInput: {
+    backgroundColor: '#111316',
+    borderWidth: 1,
+    borderColor: '#2c313a',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: '#ffffff',
+    marginBottom: 20,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+  },
+  modalCancelButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  modalCancelText: {
+    color: '#94a3b8',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  modalCreateButton: {
+    backgroundColor: '#F5C29E',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  modalCreateText: {
+    color: '#151618',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
