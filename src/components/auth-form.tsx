@@ -146,7 +146,7 @@ export function AuthForm() {
           disabled={loading}
           onPress={handleSubmit}>
           {loading ? (
-            <ActivityIndicator color="#ffffff" />
+            <ActivityIndicator color="#151618" />
           ) : (
             <Text style={styles.submitButtonText}>
               {isSignUp ? 'Sign Up' : 'Sign In'}
@@ -185,11 +185,6 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: '#1e293b',
-    borderRadius: 20,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: '#334155',
     gap: 16,
   },
   header: {
@@ -222,17 +217,17 @@ const styles = StyleSheet.create({
     color: '#cbd5e1',
   },
   input: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#14161a',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#2a2e35',
     paddingHorizontal: 16,
     paddingVertical: 14,
     color: '#f8fafc',
     fontSize: 16,
   },
   submitButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#F5C29E',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -245,7 +240,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   submitButtonText: {
-    color: '#ffffff',
+    color: '#151618',
     fontSize: 16,
     fontWeight: '700',
   },
@@ -261,7 +256,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   toggleLink: {
-    color: '#60a5fa',
+    color: '#F5C29E',
     fontSize: 14,
     fontWeight: '700',
   },

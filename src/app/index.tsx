@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import {
   Keyboard,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -40,6 +41,9 @@ export default function HomeScreen() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
+
+  // Auth modal state for Settings screen
+  const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
 
   const handleCreateStudySet = () => {
     const trimmed = newTitle.trim();
@@ -203,44 +207,54 @@ export default function HomeScreen() {
             style={styles.scrollView}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}>
-            {/* Settings Screen */}
+            {/* Settings Header */}
             <View style={styles.headerRow}>
               <Text style={styles.headerTitle}>Settings</Text>
             </View>
 
-            {session && user ? (
-              <View style={styles.settingsCard}>
-                <Text style={styles.settingsCardBadge}>Authenticated</Text>
-                <Text style={styles.settingsCardLabel}>Account Email</Text>
-                <Text style={styles.settingsCardValue}>{user.email}</Text>
+            {/* Settings Hero */}
+            <Text style={styles.settingsHeroText}>Your study space</Text>
+            <Text style={styles.settingsDescription}>
+              {'Manage your account and keep learning at\nyour pace.'}
+            </Text>
 
-                <Text style={[styles.settingsCardLabel, { marginTop: 12 }]}>
-                  User ID
-                </Text>
-                <Text style={styles.settingsCardMono}>{user.id}</Text>
+            {/* Signed In Card */}
+            <Pressable
+              style={styles.settingsSignedInCard}
+              onPress={() => {
+                if (!session) setIsAuthModalVisible(true);
+              }}>
+              <Text style={styles.settingsSignedInLabel}>Signed in as</Text>
+              <Text style={styles.settingsSignedInEmail}>
+                {user?.email || 'amitdewangan@gmail.com'}
+              </Text>
+            </Pressable>
 
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.signOutButton,
-                    pressed && styles.buttonPressed,
-                  ]}
-                  onPress={signOut}>
-                  <Feather name="log-out" size={16} color="#f87171" />
-                  <Text style={styles.signOutButtonText}>Sign Out</Text>
-                </Pressable>
-              </View>
-            ) : (
-              <View style={styles.authWrapper}>
-                <AuthForm />
-              </View>
-            )}
-
-            <View style={styles.aboutCard}>
-              <Text style={styles.aboutTitle}>AI Study Buddy</Text>
-              <Text style={styles.aboutSubtitle}>
-                Version 1.0.0 • Mobile-first learning companion
+            {/* About Card */}
+            <View style={styles.settingsAboutCard}>
+              <Text style={styles.settingsAboutTitle}>About Study Buddy</Text>
+              <Text style={styles.settingsAboutDescription}>
+                Your materials, made easier to understand. Build study sets,
+                explore summaries, practice flashcards, and ask questions
+                grounded in your notes.
               </Text>
             </View>
+
+            {/* Sign Out Button */}
+            <Pressable
+              style={({ pressed }) => [
+                styles.settingsSignOutButton,
+                pressed && { opacity: 0.7 },
+              ]}
+              onPress={() => {
+                if (session) {
+                  signOut();
+                } else {
+                  setIsAuthModalVisible(true);
+                }
+              }}>
+              <Text style={styles.settingsSignOutText}>Sign out</Text>
+            </Pressable>
           </ScrollView>
         )}
 
@@ -302,6 +316,33 @@ export default function HomeScreen() {
             </Text>
           </Pressable>
         </View>
+
+        {/* Auth Modal for Supabase Login / Signup */}
+        <Modal
+          animationType="fade"
+          transparent
+          visible={isAuthModalVisible}
+          onRequestClose={() => setIsAuthModalVisible(false)}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={styles.modalOverlay}>
+            <Pressable
+              style={styles.modalBackdrop}
+              onPress={() => setIsAuthModalVisible(false)}
+            />
+            <View style={styles.authModalContent}>
+              <View style={styles.authModalHeader}>
+                <Text style={styles.authModalTitle}>Account</Text>
+                <Pressable
+                  hitSlop={12}
+                  onPress={() => setIsAuthModalVisible(false)}>
+                  <Feather name="x" size={20} color="#94a3b8" />
+                </Pressable>
+              </View>
+              <AuthForm />
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -478,83 +519,101 @@ const styles = StyleSheet.create({
   },
 
   /* ── Settings screen ── */
-  settingsCard: {
+  settingsHeroText: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#ffffff',
+    letterSpacing: -0.3,
+    marginBottom: 12,
+  },
+  settingsDescription: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#8c929a',
+    marginBottom: 32,
+  },
+  settingsSignedInCard: {
     backgroundColor: '#1b1e22',
     borderRadius: 18,
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
     borderWidth: 1,
     borderColor: '#24282f',
     marginBottom: 16,
+    gap: 8,
   },
-  settingsCardBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#132e22',
-    color: '#34d399',
-    fontSize: 11,
+  settingsSignedInLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#8c929a',
+  },
+  settingsSignedInEmail: {
+    fontSize: 17,
     fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginBottom: 14,
+    color: '#ffffff',
   },
-  settingsCardLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748b',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 4,
+  settingsAboutCard: {
+    backgroundColor: '#1b1e22',
+    borderRadius: 18,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    borderWidth: 1,
+    borderColor: '#24282f',
+    marginBottom: 24,
+    gap: 10,
   },
-  settingsCardValue: {
+  settingsAboutTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  settingsAboutDescription: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#f1f5f9',
+    lineHeight: 22,
+    color: '#a0a6b0',
   },
-  settingsCardMono: {
-    fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }),
-    fontSize: 12,
-    color: '#93c5fd',
-  },
-  signOutButton: {
-    flexDirection: 'row',
+  settingsSignOutButton: {
+    backgroundColor: '#1b1e22',
+    borderRadius: 14,
+    paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#291b1f',
-    borderRadius: 12,
-    paddingVertical: 12,
-    marginTop: 20,
     borderWidth: 1,
-    borderColor: '#451a24',
+    borderColor: '#24282f',
   },
-  signOutButtonText: {
-    color: '#f87171',
-    fontSize: 14,
+  settingsSignOutText: {
+    fontSize: 16,
     fontWeight: '600',
+    color: '#F5C29E',
   },
-  authWrapper: {
-    marginBottom: 20,
+  /* ── Auth modal ── */
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
   },
-  aboutCard: {
-    backgroundColor: '#15171b',
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  authModalContent: {
+    backgroundColor: '#1b1e22',
+    borderRadius: 24,
+    padding: 20,
     borderWidth: 1,
-    borderColor: '#20242a',
+    borderColor: '#24282f',
   },
-  aboutTitle: {
-    fontSize: 14,
+  authModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  authModalTitle: {
+    fontSize: 20,
     fontWeight: '700',
-    color: '#94a3b8',
-    marginBottom: 2,
-  },
-  aboutSubtitle: {
-    fontSize: 12,
-    color: '#64748b',
-    textAlign: 'center',
+    color: '#ffffff',
+    letterSpacing: -0.3,
   },
 
   /* ── Bottom tab bar ── */
