@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import type { ScrollView as ScrollViewType } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 
@@ -21,20 +22,24 @@ type Tab = 'library' | 'settings';
 interface StudySet {
   id: string;
   title: string;
+  description: string;
   updatedAt: string;
 }
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { session, user, signOut } = useAuth();
+  const scrollViewRef = useRef<ScrollViewType>(null);
 
   const [activeTab, setActiveTab] = useState<Tab>('library');
 
-  // Study sets collection - empty by default as requested:
-  // "in place of os1 , operating system and Os card .. make the place empty"
+  // Study sets collection
   const [studySets, setStudySets] = useState<StudySet[]>([]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  // Inline form state
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
+  const [newDescription, setNewDescription] = useState('');
 
   const handleCreateStudySet = () => {
     const trimmed = newTitle.trim();
@@ -49,12 +54,30 @@ export default function HomeScreen() {
     const newSet: StudySet = {
       id: Date.now().toString(),
       title: trimmed,
+      description: newDescription.trim(),
       updatedAt: formattedDate,
     };
 
     setStudySets((prev) => [newSet, ...prev]);
     setNewTitle('');
-    setIsModalVisible(false);
+    setNewDescription('');
+    setIsFormOpen(false);
+    Keyboard.dismiss();
+  };
+
+  const handleOpenForm = () => {
+    setIsFormOpen(true);
+    // Auto-scroll down so the form is visible above the keyboard
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 150);
+  };
+
+  const handleCancelForm = () => {
+    Keyboard.dismiss();
+    setNewTitle('');
+    setNewDescription('');
+    setIsFormOpen(false);
   };
 
   const handleDeleteStudySet = (id: string) => {
@@ -63,13 +86,18 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <View style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
         {/* Main Content Area */}
         {activeTab === 'library' ? (
           <ScrollView
+            ref={scrollViewRef}
             style={styles.scrollView}
             contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}>
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled">
             {/* Top Header */}
             <View style={styles.headerRow}>
               <Text style={styles.headerTitle}>Library</Text>
@@ -88,19 +116,66 @@ export default function HomeScreen() {
               {'Upload materials, generate summaries,\nflashcards, and chat with your notes.'}
             </Text>
 
-            {/* Primary Action Button */}
-            <Pressable
-              style={({ pressed }) => [
-                styles.primaryButton,
-                pressed && styles.buttonPressed,
-              ]}
-              onPress={() => setIsModalVisible(true)}>
-              <Text style={styles.primaryButtonText}>New study set</Text>
-            </Pressable>
+            {/* Inline Form or Button */}
+            {isFormOpen ? (
+              <View style={styles.formCard}>
+                <Text style={styles.formTitle}>New study set</Text>
 
-            {/* Collections List Area:
-                Empty by default ("in place of os1 , operating system and Os card .. make the place empty").
-                If the user creates study sets via the button, they render with the exact matching card style. */}
+                <TextInput
+                  style={styles.formInput}
+                  placeholder="Title"
+                  placeholderTextColor="#7c838d"
+                  value={newTitle}
+                  onChangeText={setNewTitle}
+                  autoFocus
+                  returnKeyType="next"
+                />
+
+                <TextInput
+                  style={[styles.formInput, styles.formInputDescription]}
+                  placeholder="Description (optional)"
+                  placeholderTextColor="#7c838d"
+                  value={newDescription}
+                  onChangeText={setNewDescription}
+                  multiline
+                  textAlignVertical="top"
+                  returnKeyType="default"
+                />
+
+                <View style={styles.formActions}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.formCreateButton,
+                      pressed && styles.buttonPressed,
+                      !newTitle.trim() && { opacity: 0.45 },
+                    ]}
+                    disabled={!newTitle.trim()}
+                    onPress={handleCreateStudySet}>
+                    <Text style={styles.formCreateText}>Create</Text>
+                  </Pressable>
+
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.formCancelButton,
+                      pressed && { opacity: 0.7 },
+                    ]}
+                    onPress={handleCancelForm}>
+                    <Text style={styles.formCancelText}>Cancel</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ) : (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.primaryButton,
+                  pressed && styles.buttonPressed,
+                ]}
+                onPress={() => handleOpenForm()}>
+                <Text style={styles.primaryButtonText}>New study set</Text>
+              </Pressable>
+            )}
+
+            {/* Collections List */}
             <View style={styles.collectionsContainer}>
               {studySets.map((set) => (
                 <View key={set.id} style={styles.studyCard}>
@@ -227,64 +302,7 @@ export default function HomeScreen() {
             </Text>
           </Pressable>
         </View>
-
-        {/* Modal for Creating New Study Set */}
-        <Modal
-          animationType="fade"
-          transparent
-          visible={isModalVisible}
-          onRequestClose={() => setIsModalVisible(false)}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            style={styles.modalOverlay}>
-            <Pressable
-              style={styles.modalBackdrop}
-              onPress={() => setIsModalVisible(false)}
-            />
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>New Study Set</Text>
-              <Text style={styles.modalSubtitle}>
-                Give your new study collection a title to get started.
-              </Text>
-
-              <TextInput
-                style={styles.modalInput}
-                placeholder="e.g. Operating Systems"
-                placeholderTextColor="#64748b"
-                value={newTitle}
-                onChangeText={setNewTitle}
-                autoFocus
-                returnKeyType="done"
-                onSubmitEditing={handleCreateStudySet}
-              />
-
-              <View style={styles.modalActions}>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.modalCancelButton,
-                    pressed && { opacity: 0.7 },
-                  ]}
-                  onPress={() => {
-                    setNewTitle('');
-                    setIsModalVisible(false);
-                  }}>
-                  <Text style={styles.modalCancelText}>Cancel</Text>
-                </Pressable>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.modalCreateButton,
-                    pressed && styles.buttonPressed,
-                    !newTitle.trim() && { opacity: 0.5 },
-                  ]}
-                  disabled={!newTitle.trim()}
-                  onPress={handleCreateStudySet}>
-                  <Text style={styles.modalCreateText}>Create</Text>
-                </Pressable>
-              </View>
-            </View>
-          </KeyboardAvoidingView>
-        </Modal>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -338,6 +356,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 32,
   },
+
+  /* ── Primary "New study set" button ── */
   primaryButton: {
     backgroundColor: '#F5C29E',
     height: 52,
@@ -360,6 +380,68 @@ const styles = StyleSheet.create({
     opacity: 0.85,
     transform: [{ scale: 0.99 }],
   },
+
+  /* ── Inline creation form (replaces the button when open) ── */
+  formCard: {
+    backgroundColor: '#1b1e22',
+    borderRadius: 20,
+    padding: 20,
+    marginTop: 24,
+    borderWidth: 1,
+    borderColor: '#24282f',
+    gap: 16,
+  },
+  formTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginBottom: 4,
+  },
+  formInput: {
+    backgroundColor: '#2a2e35',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: '#ffffff',
+  },
+  formInputDescription: {
+    minHeight: 72,
+    paddingTop: 14,
+  },
+  formActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 4,
+  },
+  formCreateButton: {
+    flex: 1,
+    backgroundColor: '#F5C29E',
+    height: 46,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  formCreateText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#151618',
+  },
+  formCancelButton: {
+    paddingHorizontal: 20,
+    height: 46,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  formCancelText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#94a3b8',
+  },
+
+  /* ── Study set cards ── */
   collectionsContainer: {
     marginTop: 20,
     minHeight: 40,
@@ -394,6 +476,8 @@ const styles = StyleSheet.create({
     padding: 8,
     marginLeft: 12,
   },
+
+  /* ── Settings screen ── */
   settingsCard: {
     backgroundColor: '#1b1e22',
     borderRadius: 18,
@@ -472,6 +556,8 @@ const styles = StyleSheet.create({
     color: '#64748b',
     textAlign: 'center',
   },
+
+  /* ── Bottom tab bar ── */
   bottomBar: {
     backgroundColor: '#101411',
     borderTopWidth: 1,
@@ -508,77 +594,5 @@ const styles = StyleSheet.create({
   tabLabelInactive: {
     color: '#8E988D',
     fontWeight: '500',
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    paddingHorizontal: 20,
-  },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFill,
-  },
-  modalContent: {
-    width: '100%',
-    backgroundColor: '#1b1e22',
-    borderRadius: 20,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: '#2c313a',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#ffffff',
-    marginBottom: 6,
-  },
-  modalSubtitle: {
-    fontSize: 13,
-    color: '#8a9099',
-    marginBottom: 18,
-    lineHeight: 18,
-  },
-  modalInput: {
-    backgroundColor: '#111316',
-    borderWidth: 1,
-    borderColor: '#2c313a',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: '#ffffff',
-    marginBottom: 20,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 10,
-  },
-  modalCancelButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  modalCancelText: {
-    color: '#94a3b8',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  modalCreateButton: {
-    backgroundColor: '#F5C29E',
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  modalCreateText: {
-    color: '#151618',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });
