@@ -1,0 +1,17 @@
+export const colors = {
+  background: '#0d0f11',
+  card: '#1b1e22',
+  cardBorder: '#24282f',
+  input: '#14161a',
+  inputBorder: '#2a2e35',
+  textPrimary: '#ffffff',
+  textSecondary: '#8c929a',
+  textMuted: '#7c838d',
+  accent: '#F5C29E',
+  accentText: '#151618',
+  danger: '#f87171',
+  tabBar: '#101411',
+  tabBarBorder: '#171c18',
+  tabInactive: '#8E988D',
+  tabActivePill: '#283627',
+} as const;

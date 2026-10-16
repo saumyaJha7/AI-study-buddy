@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 
+import { colors } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 
 export function AuthForm() {
@@ -185,6 +186,11 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 420,
+    backgroundColor: colors.card,
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
     gap: 16,
   },
   header: {
@@ -198,12 +204,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: colors.textPrimary,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 6,
     lineHeight: 20,
@@ -217,17 +223,17 @@ const styles = StyleSheet.create({
     color: '#cbd5e1',
   },
   input: {
-    backgroundColor: '#14161a',
+    backgroundColor: colors.input,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2a2e35',
+    borderColor: colors.inputBorder,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: '#f8fafc',
+    color: colors.textPrimary,
     fontSize: 16,
   },
   submitButton: {
-    backgroundColor: '#F5C29E',
+    backgroundColor: colors.accent,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -240,7 +246,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   submitButtonText: {
-    color: '#151618',
+    color: colors.accentText,
     fontSize: 16,
     fontWeight: '700',
   },
