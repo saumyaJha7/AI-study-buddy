@@ -307,13 +307,14 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   headerRow: {
-    marginBottom: 28,
+    marginBottom: 36,
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: '700',
     color: '#ffffff',
     letterSpacing: -0.3,
+    marginBottom: 8,
   },
   heroText: {
     fontSize: 32,
@@ -321,19 +322,21 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     lineHeight: 38,
     letterSpacing: -0.5,
+    marginBottom: 16,
   },
   sectionSubtitle: {
     fontSize: 17,
     fontWeight: '600',
     color: '#8c929a',
-    marginTop: 24,
+    marginTop: 32,
+    marginBottom: 8,
   },
   descriptionText: {
     fontSize: 15,
     lineHeight: 22,
     color: '#d0d4dc',
-    marginTop: 8,
-    marginBottom: 24,
+    marginTop: 12,
+    marginBottom: 32,
   },
   primaryButton: {
     backgroundColor: '#F5C29E',
@@ -346,6 +349,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 2,
+    marginTop: 24,
   },
   primaryButtonText: {
     fontSize: 16,
