@@ -1,6 +1,7 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { Platform } from 'react-native';
 
+import { ensureProfile } from '@/features/auth/profile';
 import { supabase } from '@/lib/supabase';
 import type { Source } from './query';
 
@@ -32,16 +33,35 @@ export async function pickAndUploadPdf(
     throw new Error('PDFs must be 20 MB or smaller.');
   }
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError) throw userError;
-  if (!user) throw new Error('You need to be signed in to upload a PDF.');
+  const user = await ensureProfile();
 
   const title = asset.name.replace(/\.pdf$/i, '').trim() || 'Untitled PDF';
   const storagePath = `${user.id}/${studySetId}/${Date.now()}.pdf`;
+
+  let fileSize = asset.size ?? null;
+  let webFile: Blob | null = null;
+  let nativeBytes: ArrayBuffer | null = null;
+
+  if (Platform.OS === 'web') {
+    const picked =
+      asset.file ?? (await fetch(asset.uri).then((response) => response.blob()));
+    webFile = picked ?? null;
+    fileSize = picked?.size ?? fileSize;
+  } else {
+    const { File } = await import('expo-file-system');
+    const file = new File(asset.uri);
+    fileSize = file.size ?? fileSize;
+
+    if (fileSize > MAX_PDF_BYTES) {
+      throw new Error('PDFs must be 20 MB or smaller.');
+    }
+
+    nativeBytes = await file.arrayBuffer();
+  }
+
+  if (typeof fileSize === 'number' && fileSize > MAX_PDF_BYTES) {
+    throw new Error('PDFs must be 20 MB or smaller.');
+  }
 
   const { data: source, error: insertError } = await supabase
     .from('sources')
@@ -52,7 +72,7 @@ export async function pickAndUploadPdf(
       title,
       status: 'pending',
       storage_path: storagePath,
-      file_size: asset.size ?? null,
+      file_size: fileSize,
       mime_type: 'application/pdf',
     })
     .select('id')
@@ -62,25 +82,14 @@ export async function pickAndUploadPdf(
   if (!source) throw new Error('Could not create the source.');
 
   try {
-    if (Platform.OS === 'web') {
-      const file =
-        asset.file ?? (await fetch(asset.uri).then((response) => response.blob()));
+    const uploadBody = webFile ?? nativeBytes;
+    if (!uploadBody) throw new Error('Could not read the selected PDF.');
 
-      const { error: uploadError } = await supabase.storage
-        .from(BUCKET)
-        .upload(storagePath, file, { contentType: 'application/pdf' });
+    const { error: uploadError } = await supabase.storage
+      .from(BUCKET)
+      .upload(storagePath, uploadBody, { contentType: 'application/pdf' });
 
-      if (uploadError) throw uploadError;
-    } else {
-      const { File } = await import('expo-file-system');
-      const bytes = await new File(asset.uri).arrayBuffer();
-
-      const { error: uploadError } = await supabase.storage
-        .from(BUCKET)
-        .upload(storagePath, bytes, { contentType: 'application/pdf' });
-
-      if (uploadError) throw uploadError;
-    }
+    if (uploadError) throw uploadError;
 
     return source.id as string;
   } catch (cause) {
