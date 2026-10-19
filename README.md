@@ -11,11 +11,11 @@ PDF extraction, chunking, and Anthropic-backed generation.
 
 | Sign in | Library | New study set |
 | :-: | :-: | :-: |
-| <img src="docs/screenshots/01-sign-in.png" width="180" alt="Sign in" /> | <img src="docs/screenshots/02-library.png" width="180" alt="Library" /> | <img src="docs/screenshots/03-new-study-set.png" width="180" alt="New study set" /> |
+| <img src="docs/screenshots/ai_study_buddy_1.jpeg" width="180" alt="Sign in" /> | <img src="docs/screenshots/ai_study_buddy_2.jpeg" width="180" alt="Library" /> | <img src="docs/screenshots/ai_study_buddy_3.jpeg" width="180" alt="New study set" /> |
 
 | Study set | Study chat | Settings |
 | :-: | :-: | :-: |
-| <img src="docs/screenshots/04-study-set-detail.png" width="180" alt="Study set detail" /> | <img src="docs/screenshots/05-study-chat.png" width="180" alt="Study chat" /> | <img src="docs/screenshots/06-settings.png" width="180" alt="Settings" /> |
+| <img src="docs/screenshots/ai_study_buddy_4.jpeg" width="180" alt="Study set detail" /> | <img src="docs/screenshots/ai_study_buddy_5.jpeg" width="180" alt="Study chat" /> | <img src="docs/screenshots/ai_study_buddy_6.jpeg" width="180" alt="Settings" /> |
 
 ## Features
 
