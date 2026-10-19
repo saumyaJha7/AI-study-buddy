@@ -20,6 +20,7 @@ import { pickAndUploadPdf } from '@/features/sources/actions';
 import { sourceKeys, useSources } from '@/features/sources/query';
 import { deleteStudySet } from '@/features/study-sets/actions';
 import { studySetKeys, useStudySet } from '@/features/study-sets/query';
+import { processSource } from '@/lib/api-client';
 
 const STUDY_MODES = [
   {
@@ -59,7 +60,13 @@ export default function StudySetDetailScreen() {
   const hasReadySources = readyCount > 0;
 
   const uploadMutation = useMutation({
-    mutationFn: () => pickAndUploadPdf(studySetId),
+    mutationFn: async () => {
+      const sourceId = await pickAndUploadPdf(studySetId);
+      if (!sourceId) return null;
+
+      await processSource(sourceId);
+      return sourceId;
+    },
     onSuccess: async (sourceId) => {
       if (!sourceId) return;
 
