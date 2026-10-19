@@ -37,7 +37,7 @@ const STUDY_MODES = [
   {
     title: 'Study chat',
     description: 'Follow your curiosity',
-    route: null,
+    route: 'chat' as const,
   },
 ];
 
@@ -182,6 +182,11 @@ export default function StudySetDetailScreen() {
                     } else if (mode.route === 'flashcards') {
                       router.push({
                         pathname: '/(tabs)/(library)/[studySetId]/flashcards',
+                        params: { studySetId },
+                      });
+                    } else if (mode.route === 'chat') {
+                      router.push({
+                        pathname: '/(tabs)/(library)/[studySetId]/chat',
                         params: { studySetId },
                       });
                     }

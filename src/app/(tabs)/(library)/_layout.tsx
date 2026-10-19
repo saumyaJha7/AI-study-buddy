@@ -12,6 +12,7 @@ export default function LibraryLayout() {
         name="[studySetId]/flashcards"
         options={{ title: 'Flashcards' }}
       />
+      <Stack.Screen name="[studySetId]/chat" options={{ title: 'Study chat' }} />
     </Stack>
   );
 }

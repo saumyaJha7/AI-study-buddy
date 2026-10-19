@@ -1,7 +1,7 @@
 import { generateText } from 'ai';
 import { Router } from 'express';
 
-import { chatModelId, getChatModel } from '../lib/ai.js';
+import { aiErrorStatus, chatModelId, getChatModel } from '../lib/ai.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { getStudySetText } from '../services/rag.js';
 
@@ -48,8 +48,7 @@ summariesRouter.post('/:id/summary', async (req, res) => {
       err instanceof Error ? err.message : 'Failed to generate a summary';
     console.error('[summaries]', message);
 
-    const status =
-      (err as { status?: number })?.status === 503 ? 503 : 502;
+    const status = aiErrorStatus(err);
 
     return res.status(status).json({
       error:

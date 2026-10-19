@@ -6,6 +6,10 @@ let provider: ReturnType<typeof createAnthropic> | null = null;
 
 export const chatModelId = env.chatModel;
 
+export function aiErrorStatus(err: unknown): number {
+  return (err as { status?: number })?.status === 503 ? 503 : 502;
+}
+
 export function getChatModel() {
   if (!env.anthropicApiKey) {
     const error = new Error(

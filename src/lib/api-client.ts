@@ -77,3 +77,10 @@ export function generateFlashcards(studySetId: string, count: number) {
     cards: { front: string; back: string }[];
   }>(`/study-sets/${studySetId}/flashcards`, { count });
 }
+
+export function sendChatMessage(conversationId: string, message: string) {
+  return apiPost<{
+    reply: string;
+    sources: { id: string; similarity: number }[];
+  }>(`/conversations/${conversationId}/chat`, { message });
+}

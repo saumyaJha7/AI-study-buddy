@@ -2,7 +2,7 @@ import { generateText } from 'ai';
 import { Router } from 'express';
 import { z } from 'zod';
 
-import { getChatModel } from '../lib/ai.js';
+import { aiErrorStatus, getChatModel } from '../lib/ai.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { getStudySetText } from '../services/rag.js';
 
@@ -59,10 +59,6 @@ function requestedCount(body: unknown): number {
       : DEFAULT_COUNT;
 
   return Math.min(MAX_COUNT, Math.max(MIN_COUNT, value));
-}
-
-function aiErrorStatus(err: unknown): number {
-  return (err as { status?: number })?.status === 503 ? 503 : 502;
 }
 
 flashcardsRouter.post('/:id/flashcards', async (req, res) => {
