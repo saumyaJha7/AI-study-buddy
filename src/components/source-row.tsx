@@ -1,11 +1,19 @@
 import { Feather } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import { StatusBadge } from '@/components/status-badge';
 import { colors } from '@/constants/theme';
 import { deleteSource } from '@/features/sources/actions';
 import { sourceKeys, type Source } from '@/features/sources/query';
+import { processSource } from '@/lib/api-client';
 
 function formatFileSize(bytes: number | null) {
   if (!bytes) return null;
@@ -16,15 +24,26 @@ function formatFileSize(bytes: number | null) {
 export function SourceRow({
   source,
   studySetId,
+  onRetryStart,
 }: {
   source: Source;
   studySetId: string;
+  onRetryStart?: () => void;
 }) {
   const queryClient = useQueryClient();
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteSource(source),
     onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: sourceKeys.list(studySetId),
+      });
+    },
+  });
+
+  const retryMutation = useMutation({
+    mutationFn: () => processSource(source.id),
+    onSettled: async () => {
       await queryClient.invalidateQueries({
         queryKey: sourceKeys.list(studySetId),
       });
@@ -46,6 +65,11 @@ export function SourceRow({
     );
   };
 
+  const retry = () => {
+    onRetryStart?.();
+    retryMutation.mutate();
+  };
+
   const size = formatFileSize(source.file_size);
   const meta = [
     'PDF',
@@ -54,6 +78,16 @@ export function SourceRow({
   ]
     .filter(Boolean)
     .join(' · ');
+
+  const canRetry =
+    source.status === 'pending' || source.status === 'failed';
+  const retrying = retryMutation.isPending;
+  const errorMessage =
+    retrying ||
+    source.status === 'ready' ||
+    source.status === 'processing'
+      ? null
+      : retryMutation.error?.message ?? source.error_message;
 
   return (
     <View style={styles.row}>
@@ -67,10 +101,36 @@ export function SourceRow({
         </Text>
         <Text style={styles.meta}>{meta}</Text>
 
-        {source.error_message ? (
+        {errorMessage ? (
           <Text selectable numberOfLines={2} style={styles.error}>
-            {source.error_message}
+            {errorMessage}
           </Text>
+        ) : null}
+
+        {canRetry ? (
+          <Pressable
+            accessibilityLabel={`Retry processing ${source.title}`}
+            accessibilityRole="button"
+            accessibilityState={{
+              busy: retrying,
+              disabled: retrying || deleteMutation.isPending,
+            }}
+            disabled={retrying || deleteMutation.isPending}
+            onPress={retry}
+            style={({ pressed }) => [
+              styles.retryButton,
+              pressed && styles.pressed,
+              (retrying || deleteMutation.isPending) && styles.disabled,
+            ]}>
+            {retrying ? (
+              <ActivityIndicator color={colors.primary} size="small" />
+            ) : (
+              <Feather name="refresh-cw" size={13} color={colors.primary} />
+            )}
+            <Text style={styles.retryLabel}>
+              {retrying ? 'Retrying...' : 'Retry processing'}
+            </Text>
+          </Pressable>
         ) : null}
 
         {deleteMutation.error ? (
@@ -85,13 +145,13 @@ export function SourceRow({
         <Pressable
           accessibilityLabel={`Remove ${source.title}`}
           accessibilityRole="button"
-          disabled={deleteMutation.isPending}
+          disabled={deleteMutation.isPending || retrying}
           hitSlop={8}
           onPress={confirmDelete}
           style={({ pressed }) => [
             styles.deleteButton,
             pressed && styles.pressed,
-            deleteMutation.isPending && styles.disabled,
+            (deleteMutation.isPending || retrying) && styles.disabled,
           ]}>
           <Feather name="trash-2" size={16} color={colors.muted} />
         </Pressable>
@@ -138,6 +198,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     color: colors.danger,
+  },
+  retryButton: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.highlight,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  retryLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
   },
   trailing: {
     alignItems: 'flex-end',

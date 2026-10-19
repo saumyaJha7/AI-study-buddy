@@ -33,19 +33,38 @@ export async function ingestSource(
 ): Promise<{ chunkCount: number }> {
   const { data: source, error } = await supabaseAdmin
     .from('sources')
-    .select('id, type, storage_path')
+    .update({ status: 'processing', error_message: null })
     .eq('id', sourceId)
     .eq('user_id', userId)
-    .single();
+    .in('status', ['pending', 'failed'])
+    .select('id, type, storage_path')
+    .maybeSingle();
 
-  if (error || !source) {
-    throw Object.assign(new Error('Source not found'), { status: 404 });
+  if (error) {
+    throw new Error(error.message);
   }
 
-  await supabaseAdmin
-    .from('sources')
-    .update({ status: 'processing', error_message: null })
-    .eq('id', sourceId);
+  if (!source) {
+    const { data: existing, error: lookupError } = await supabaseAdmin
+      .from('sources')
+      .select('status')
+      .eq('id', sourceId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (lookupError) {
+      throw new Error(lookupError.message);
+    }
+
+    if (!existing) {
+      throw Object.assign(new Error('Source not found'), { status: 404 });
+    }
+
+    throw Object.assign(
+      new Error(`Source is already ${existing.status}.`),
+      { status: 409 }
+    );
+  }
 
   try {
     const text = await resolveSourceText(source as SourceRow);

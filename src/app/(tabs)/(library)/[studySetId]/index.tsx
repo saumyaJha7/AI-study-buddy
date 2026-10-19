@@ -67,6 +67,8 @@ export default function StudySetDetailScreen() {
       (source) =>
         source.status === 'pending' || source.status === 'processing'
     ).length ?? 0;
+  const failedCount =
+    sources?.filter((source) => source.status === 'failed').length ?? 0;
   const hasReadySources = readyCount > 0;
 
   const uploadMutation = useMutation({
@@ -203,7 +205,9 @@ export default function StudySetDetailScreen() {
                   } ready to study.`
                 : pendingCount > 0
                   ? 'Your PDF is queued for processing.'
-                  : 'Upload a PDF to start studying.'}
+                  : failedCount > 0
+                    ? 'Processing failed. Retry the source below.'
+                    : 'Upload a PDF to start studying.'}
             </Text>
           </View>
 
@@ -243,6 +247,9 @@ export default function StudySetDetailScreen() {
                       key={source.id}
                       source={source}
                       studySetId={studySetId}
+                      onRetryStart={() => {
+                        if (uploadMutation.isError) uploadMutation.reset();
+                      }}
                     />
                   ))}
                 </View>
