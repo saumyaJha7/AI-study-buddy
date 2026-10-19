@@ -2,6 +2,7 @@ import cors from 'cors';
 import express, { type ErrorRequestHandler } from 'express';
 
 import { requireAuth } from './middleware/auth.js';
+import { flashcardsRouter } from './routes/flashcards.js';
 import { sourcesRouter } from './routes/sources.js';
 import { summariesRouter } from './routes/summaries.js';
 
@@ -21,6 +22,7 @@ app.get('/me', requireAuth, (req, res) => {
 
 app.use('/sources', requireAuth, sourcesRouter);
 app.use('/study-sets', requireAuth, summariesRouter);
+app.use('/study-sets', requireAuth, flashcardsRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'API endpoint not found' });

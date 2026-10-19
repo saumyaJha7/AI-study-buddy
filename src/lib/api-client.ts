@@ -70,3 +70,10 @@ export function generateSummary(studySetId: string) {
     `/study-sets/${studySetId}/summary`
   );
 }
+
+export function generateFlashcards(studySetId: string, count: number) {
+  return apiPost<{
+    deckId: string;
+    cards: { front: string; back: string }[];
+  }>(`/study-sets/${studySetId}/flashcards`, { count });
+}

@@ -49,9 +49,7 @@ summariesRouter.post('/:id/summary', async (req, res) => {
     console.error('[summaries]', message);
 
     const status =
-      typeof (err as { status?: number })?.status === 'number'
-        ? (err as { status: number }).status
-        : 502;
+      (err as { status?: number })?.status === 503 ? 503 : 502;
 
     return res.status(status).json({
       error:

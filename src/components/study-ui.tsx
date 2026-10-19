@@ -1,4 +1,12 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import { colors } from '@/constants/theme';
 
@@ -8,6 +16,7 @@ type ActionButtonProps = {
   disabled?: boolean;
   loading?: boolean;
   destructive?: boolean;
+  style?: StyleProp<ViewStyle>;
 };
 
 export function ActionButton({
@@ -16,6 +25,7 @@ export function ActionButton({
   disabled,
   loading,
   destructive = false,
+  style,
 }: ActionButtonProps) {
   return (
     <Pressable
@@ -26,6 +36,7 @@ export function ActionButton({
       style={({ pressed }) => [
         styles.button,
         destructive ? styles.buttonDestructive : styles.buttonPrimary,
+        style,
         pressed && styles.buttonPressed,
         (disabled || loading) && styles.buttonDisabled,
       ]}>

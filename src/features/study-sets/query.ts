@@ -21,10 +21,33 @@ export type Summary = {
   created_at: string;
 };
 
+export type FlashcardDeck = {
+  id: string;
+  user_id: string;
+  study_set_id: string;
+  title: string;
+  created_at: string;
+};
+
+export type Flashcard = {
+  id: string;
+  deck_id: string;
+  front: string;
+  back: string;
+  sort_order: number;
+  created_at: string;
+};
+
+export type FlashcardDeckWithCards = {
+  deck: FlashcardDeck;
+  cards: Flashcard[];
+};
+
 export const studySetKeys = {
   all: ['study-sets'] as const,
   detail: (id: string) => ['study-sets', id] as const,
   summary: (id: string) => ['study-sets', id, 'summary'] as const,
+  flashcards: (id: string) => ['study-sets', id, 'flashcards'] as const,
 };
 
 export function useStudySets() {
@@ -70,6 +93,38 @@ export function useLatestSummary(studySetId: string) {
         .maybeSingle();
       if (error) throw error;
       return data as Summary | null;
+    },
+    enabled: !!studySetId,
+  });
+}
+
+export function useLatestFlashcardDeck(studySetId: string) {
+  return useQuery({
+    queryKey: studySetKeys.flashcards(studySetId),
+    queryFn: async () => {
+      const { data: deck, error: deckError } = await supabase
+        .from('flashcard_decks')
+        .select('*')
+        .eq('study_set_id', studySetId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (deckError) throw deckError;
+      if (!deck) return null;
+
+      const { data: cards, error: cardsError } = await supabase
+        .from('flashcards')
+        .select('*')
+        .eq('deck_id', deck.id)
+        .order('sort_order', { ascending: true });
+
+      if (cardsError) throw cardsError;
+
+      return {
+        deck: deck as FlashcardDeck,
+        cards: (cards ?? []) as Flashcard[],
+      } satisfies FlashcardDeckWithCards;
     },
     enabled: !!studySetId,
   });

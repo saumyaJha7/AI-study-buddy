@@ -32,7 +32,7 @@ const STUDY_MODES = [
   {
     title: 'Flashcards',
     description: 'Make the ideas stick',
-    route: null,
+    route: 'flashcards' as const,
   },
   {
     title: 'Study chat',
@@ -177,6 +177,11 @@ export default function StudySetDetailScreen() {
                     if (mode.route === 'summary') {
                       router.push({
                         pathname: '/(tabs)/(library)/[studySetId]/summary',
+                        params: { studySetId },
+                      });
+                    } else if (mode.route === 'flashcards') {
+                      router.push({
+                        pathname: '/(tabs)/(library)/[studySetId]/flashcards',
                         params: { studySetId },
                       });
                     }
