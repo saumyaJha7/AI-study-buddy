@@ -72,6 +72,31 @@ export function QueryFeedback({ loading, error, onRetry }: QueryFeedbackProps) {
   );
 }
 
+export function StudyText({ content }: { content: string }) {
+  return (
+    <View style={styles.studyText}>
+      {content
+        .split('\n')
+        .filter((line) => line.trim())
+        .map((line, index) => {
+          const heading = /^#{1,6}\s/.test(line);
+
+          return (
+            <Text
+              selectable
+              key={index}
+              style={[styles.studyLine, heading && styles.studyHeading]}>
+              {line
+                .replace(/^#{1,6}\s+/, '')
+                .replace(/^[-*]\s+/, '• ')
+                .replace(/\*\*(.*?)\*\*/g, '$1')}
+            </Text>
+          );
+        })}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   button: {
     minHeight: 48,
@@ -125,5 +150,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     color: colors.danger,
+  },
+  studyText: {
+    gap: 10,
+  },
+  studyLine: {
+    fontSize: 15,
+    lineHeight: 25,
+    color: colors.foreground,
+  },
+  studyHeading: {
+    marginTop: 8,
+    fontSize: 19,
+    lineHeight: 27,
+    fontWeight: '700',
   },
 });

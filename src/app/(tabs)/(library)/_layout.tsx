@@ -7,6 +7,7 @@ export default function LibraryLayout() {
     <Stack screenOptions={stackScreenOptions}>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="[studySetId]/index" options={{ title: 'Study set' }} />
+      <Stack.Screen name="[studySetId]/summary" options={{ title: 'Summary' }} />
     </Stack>
   );
 }

@@ -64,3 +64,9 @@ export function processSource(sourceId: string) {
     `/sources/${sourceId}/process`
   );
 }
+
+export function generateSummary(studySetId: string) {
+  return apiPost<{ id: string; content: string }>(
+    `/study-sets/${studySetId}/summary`
+  );
+}

@@ -22,4 +22,7 @@ export const env = {
   supabaseUrl: required('SUPABASE_URL'),
   supabaseAnonKey: required('SUPABASE_ANON_KEY'),
   supabaseServiceRoleKey: required('SUPABASE_SERVICE_ROLE_KEY'),
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY?.trim() || '',
+  chatModel:
+    process.env.ANTHROPIC_CHAT_MODEL?.trim() || 'claude-sonnet-4-5',
 } as const;

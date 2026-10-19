@@ -3,6 +3,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ActivityIndicator,
   Alert,
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -26,14 +27,17 @@ const STUDY_MODES = [
   {
     title: 'Summary',
     description: 'See the big picture',
+    route: 'summary' as const,
   },
   {
     title: 'Flashcards',
     description: 'Make the ideas stick',
+    route: null,
   },
   {
     title: 'Study chat',
     description: 'Follow your curiosity',
+    route: null,
   },
 ];
 
@@ -164,13 +168,38 @@ export default function StudySetDetailScreen() {
 
             <View style={styles.modeGrid}>
               {STUDY_MODES.map((mode) => (
-                <View key={mode.title} style={styles.modeCard}>
+                <Pressable
+                  key={mode.title}
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: !mode.route }}
+                  disabled={!mode.route}
+                  onPress={() => {
+                    if (mode.route === 'summary') {
+                      router.push({
+                        pathname: '/(tabs)/(library)/[studySetId]/summary',
+                        params: { studySetId },
+                      });
+                    }
+                  }}
+                  style={({ pressed }) => [
+                    styles.modeCard,
+                    mode.route
+                      ? styles.modeCardEnabled
+                      : styles.modeCardLocked,
+                    pressed && styles.modeCardPressed,
+                  ]}>
                   <Text style={styles.modeTitle}>{mode.title}</Text>
                   <Text style={styles.modeDescription}>
                     {mode.description}
                   </Text>
-                  <Text style={styles.modeLocked}>Coming next</Text>
-                </View>
+                  <Text
+                    style={[
+                      styles.modeLocked,
+                      mode.route ? styles.modeReady : null,
+                    ]}>
+                    {mode.route ? 'Open' : 'Coming next'}
+                  </Text>
+                </Pressable>
               ))}
             </View>
 
@@ -329,10 +358,19 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.highlight,
+    backgroundColor: colors.card,
     paddingHorizontal: 20,
     paddingVertical: 20,
+  },
+  modeCardEnabled: {
+    borderColor: colors.primary,
+    backgroundColor: colors.highlight,
+  },
+  modeCardLocked: {
     opacity: 0.55,
+  },
+  modeCardPressed: {
+    opacity: 0.8,
   },
   modeTitle: {
     fontSize: 18,
@@ -350,6 +388,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.8,
     color: colors.muted,
+  },
+  modeReady: {
+    color: colors.primary,
   },
   helper: {
     fontSize: 14,
