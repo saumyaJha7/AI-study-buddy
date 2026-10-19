@@ -23,6 +23,12 @@ import { deleteStudySet } from '@/features/study-sets/actions';
 import { studySetKeys, useStudySet } from '@/features/study-sets/query';
 import { processSource } from '@/lib/api-client';
 
+const MODE_ROUTES = {
+  summary: '/(tabs)/(library)/[studySetId]/summary',
+  flashcards: '/(tabs)/(library)/[studySetId]/flashcards',
+  chat: '/(tabs)/(library)/[studySetId]/chat',
+} as const;
+
 const STUDY_MODES = [
   {
     title: 'Summary',
@@ -171,44 +177,21 @@ export default function StudySetDetailScreen() {
                 <Pressable
                   key={mode.title}
                   accessibilityRole="button"
-                  accessibilityState={{ disabled: !mode.route }}
-                  disabled={!mode.route}
-                  onPress={() => {
-                    if (mode.route === 'summary') {
-                      router.push({
-                        pathname: '/(tabs)/(library)/[studySetId]/summary',
-                        params: { studySetId },
-                      });
-                    } else if (mode.route === 'flashcards') {
-                      router.push({
-                        pathname: '/(tabs)/(library)/[studySetId]/flashcards',
-                        params: { studySetId },
-                      });
-                    } else if (mode.route === 'chat') {
-                      router.push({
-                        pathname: '/(tabs)/(library)/[studySetId]/chat',
-                        params: { studySetId },
-                      });
-                    }
-                  }}
+                  onPress={() =>
+                    router.push({
+                      pathname: MODE_ROUTES[mode.route],
+                      params: { studySetId },
+                    })
+                  }
                   style={({ pressed }) => [
                     styles.modeCard,
-                    mode.route
-                      ? styles.modeCardEnabled
-                      : styles.modeCardLocked,
                     pressed && styles.modeCardPressed,
                   ]}>
                   <Text style={styles.modeTitle}>{mode.title}</Text>
                   <Text style={styles.modeDescription}>
                     {mode.description}
                   </Text>
-                  <Text
-                    style={[
-                      styles.modeLocked,
-                      mode.route ? styles.modeReady : null,
-                    ]}>
-                    {mode.route ? 'Open' : 'Coming next'}
-                  </Text>
+                  <Text style={styles.modeAction}>Open</Text>
                 </Pressable>
               ))}
             </View>
@@ -220,7 +203,7 @@ export default function StudySetDetailScreen() {
                   } ready to study.`
                 : pendingCount > 0
                   ? 'Your PDF is queued for processing.'
-                  : 'Upload a PDF to unlock these tools.'}
+                  : 'Upload a PDF to start studying.'}
             </Text>
           </View>
 
@@ -269,12 +252,6 @@ export default function StudySetDetailScreen() {
                   description="Upload a PDF to build your study material."
                 />
               )
-            ) : null}
-
-            {pendingCount > 0 ? (
-              <Text style={styles.note}>
-                Processing will run once the study server is connected.
-              </Text>
             ) : null}
           </View>
 
@@ -346,11 +323,6 @@ const styles = StyleSheet.create({
   sourceList: {
     gap: 8,
   },
-  note: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: colors.muted,
-  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
@@ -367,17 +339,10 @@ const styles = StyleSheet.create({
     gap: 6,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-  },
-  modeCardEnabled: {
     borderColor: colors.primary,
     backgroundColor: colors.highlight,
-  },
-  modeCardLocked: {
-    opacity: 0.55,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
   },
   modeCardPressed: {
     opacity: 0.8,
@@ -392,14 +357,11 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: colors.muted,
   },
-  modeLocked: {
+  modeAction: {
     marginTop: 8,
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 0.8,
-    color: colors.muted,
-  },
-  modeReady: {
     color: colors.primary,
   },
   helper: {

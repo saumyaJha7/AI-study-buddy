@@ -14,7 +14,6 @@ export const colors = {
   // Aliases used by the existing screens and components.
   textPrimary: '#E1DCC9',
   textSecondary: '#B3A58E',
-  textMuted: '#B3A58E',
   accent: '#E1DCC9',
   accentText: '#000000',
   cardBorder: '#412D15',

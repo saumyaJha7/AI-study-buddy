@@ -54,7 +54,8 @@ export default function LibraryScreen() {
       <View style={styles.sectionRow}>
         <Text style={styles.sectionTitle}>Your collections</Text>
         <Text style={styles.countText}>
-          {studySets?.length ?? 0} study sets
+          {studySets?.length ?? 0}{' '}
+          {(studySets?.length ?? 0) === 1 ? 'study set' : 'study sets'}
         </Text>
       </View>
 

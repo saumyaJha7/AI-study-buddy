@@ -5,7 +5,6 @@ import { extractPdfText } from './pdf.js';
 type SourceRow = {
   id: string;
   type: 'pdf' | 'note' | 'web';
-  content: string | null;
   storage_path: string | null;
 };
 
@@ -34,7 +33,7 @@ export async function ingestSource(
 ): Promise<{ chunkCount: number }> {
   const { data: source, error } = await supabaseAdmin
     .from('sources')
-    .select('id, type, content, storage_path')
+    .select('id, type, storage_path')
     .eq('id', sourceId)
     .eq('user_id', userId)
     .single();
