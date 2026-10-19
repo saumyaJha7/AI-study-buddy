@@ -262,21 +262,6 @@ export default function StudySetDetailScreen() {
             ) : null}
           </View>
 
-          <View style={styles.metaCard}>
-            <View style={styles.metaRow}>
-              <Text style={styles.metaLabel}>Created</Text>
-              <Text style={styles.metaValue}>
-                {new Date(studySet.created_at).toLocaleDateString()}
-              </Text>
-            </View>
-            <View style={styles.metaRow}>
-              <Text style={styles.metaLabel}>Updated</Text>
-              <Text style={styles.metaValue}>
-                {new Date(studySet.updated_at).toLocaleDateString()}
-              </Text>
-            </View>
-          </View>
-
           <QueryFeedback error={deleteMutation.error} />
 
           <ActionButton
@@ -375,28 +360,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     color: colors.muted,
-  },
-  metaCard: {
-    gap: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-    padding: 20,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  metaLabel: {
-    fontSize: 14,
-    color: colors.muted,
-  },
-  metaValue: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.foreground,
   },
 });

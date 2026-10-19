@@ -54,9 +54,6 @@ export function StudySetCard({ studySet, index = 0 }: StudySetCardProps) {
           ) : null}
 
           <View style={styles.footer}>
-            <Text style={styles.updated}>
-              Updated {new Date(studySet.updated_at).toLocaleDateString()}
-            </Text>
             <Text style={styles.openLabel}>Open collection →</Text>
           </View>
         </View>
@@ -146,15 +143,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     gap: 8,
     borderTopWidth: 1,
     borderTopColor: colors.border,
     paddingTop: 12,
-  },
-  updated: {
-    fontSize: 12,
-    color: colors.muted,
   },
   openLabel: {
     fontSize: 12,

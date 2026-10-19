@@ -5,5 +5,6 @@ export const stackScreenOptions = {
   headerTintColor: colors.primary,
   headerTitleStyle: { color: colors.foreground },
   headerShadowVisible: false,
+  headerBackButtonDisplayMode: 'minimal',
   contentStyle: { backgroundColor: colors.background },
 } as const;
