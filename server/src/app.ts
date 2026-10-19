@@ -1,6 +1,9 @@
 import cors from 'cors';
 import express, { type ErrorRequestHandler } from 'express';
 
+import { requireAuth } from './middleware/auth.js';
+import { sourcesRouter } from './routes/sources.js';
+
 export const app = express();
 
 app.disable('x-powered-by');
@@ -10,6 +13,12 @@ app.use(express.json({ limit: '2mb' }));
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
+
+app.get('/me', requireAuth, (req, res) => {
+  res.json({ userId: req.userId });
+});
+
+app.use('/sources', requireAuth, sourcesRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'API endpoint not found' });

@@ -1,11 +1,25 @@
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const envPath = resolve(process.cwd(), '.env');
+const here = dirname(fileURLToPath(import.meta.url));
+const envPath = resolve(here, '..', '.env');
+
 if (existsSync(envPath)) {
   process.loadEnvFile(envPath);
 }
 
+function required(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
 export const env = {
   port: Number(process.env.PORT ?? 3001),
+  supabaseUrl: required('SUPABASE_URL'),
+  supabaseAnonKey: required('SUPABASE_ANON_KEY'),
+  supabaseServiceRoleKey: required('SUPABASE_SERVICE_ROLE_KEY'),
 } as const;
