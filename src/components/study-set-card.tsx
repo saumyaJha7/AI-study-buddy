@@ -1,81 +1,164 @@
-import Feather from '@expo/vector-icons/Feather';
+import { Link, type Href } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors } from '@/constants/theme';
+import type { StudySet } from '@/features/study-sets/query';
 
-export interface StudySet {
-  id: string;
-  title: string;
-  description: string;
-  updatedAt: string;
-}
-
-interface StudySetCardProps {
+type StudySetCardProps = {
   studySet: StudySet;
-  onDelete: (id: string) => void;
-}
+  index?: number;
+};
 
-export function StudySetCard({ studySet, onDelete }: StudySetCardProps) {
+export function StudySetCard({ studySet, index = 0 }: StudySetCardProps) {
+  const href = {
+    pathname: '/(tabs)/(library)/[studySetId]',
+    params: { studySetId: studySet.id },
+  } as Href;
+
   return (
-    <View style={styles.card}>
-      <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={1}>
-          {studySet.title}
-        </Text>
-        {studySet.description ? (
-          <Text style={styles.description} numberOfLines={2}>
-            {studySet.description}
-          </Text>
-        ) : null}
-        <Text style={styles.updated}>Updated {studySet.updatedAt}</Text>
-      </View>
+    <Link href={href} asChild>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Delete ${studySet.title}`}
-        hitSlop={12}
-        onPress={() => onDelete(studySet.id)}
-        style={({ pressed }) => [styles.deleteButton, pressed && { opacity: 0.6 }]}>
-        <Feather name="trash-2" size={16} color="#64748b" />
+        accessibilityLabel={`Open ${studySet.title}`}
+        style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
+        <View style={styles.accentBar} />
+        <View style={styles.body}>
+          <View style={styles.topRow}>
+            <View style={styles.topLeft}>
+              <View
+                style={[
+                  styles.initial,
+                  index % 2
+                    ? { transform: [{ rotate: '6deg' }] }
+                    : { transform: [{ rotate: '-6deg' }] },
+                ]}>
+                <Text style={styles.initialText}>
+                  {studySet.title.slice(0, 1).toUpperCase()}
+                </Text>
+              </View>
+              <Text style={styles.collection}>
+                COLLECTION {String(index + 1).padStart(2, '0')}
+              </Text>
+            </View>
+            <View style={styles.openCircle}>
+              <Text style={styles.openCircleText}>+</Text>
+            </View>
+          </View>
+
+          <Text style={styles.title}>{studySet.title}</Text>
+
+          {studySet.description ? (
+            <Text style={styles.description} numberOfLines={2}>
+              {studySet.description}
+            </Text>
+          ) : null}
+
+          <View style={styles.footer}>
+            <Text style={styles.updated}>
+              Updated {new Date(studySet.updated_at).toLocaleDateString()}
+            </Text>
+            <Text style={styles.openLabel}>Open collection →</Text>
+          </View>
+        </View>
       </Pressable>
-    </View>
+    </Link>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
+    flexDirection: 'row',
+    overflow: 'hidden',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
     backgroundColor: colors.card,
-    borderRadius: 18,
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    marginBottom: 14,
+  },
+  pressed: {
+    opacity: 0.8,
+  },
+  accentBar: {
+    width: 8,
+    backgroundColor: colors.highlight,
+  },
+  body: {
+    flex: 1,
+    gap: 14,
+    padding: 20,
+  },
+  topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
+    gap: 12,
   },
-  content: {
-    flex: 1,
+  topLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  initial: {
+    width: 40,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: colors.highlight,
+  },
+  initialText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  collection: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 1.4,
+    color: colors.muted,
+  },
+  openCircle: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+  },
+  openCircleText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.primaryForeground,
   },
   title: {
-    fontSize: 19,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    letterSpacing: -0.3,
-  },
-  updated: {
-    fontSize: 13,
-    color: colors.textMuted,
-    marginTop: 6,
+    fontSize: 23,
+    fontWeight: '600',
+    letterSpacing: -0.4,
+    color: colors.foreground,
   },
   description: {
     fontSize: 14,
-    lineHeight: 20,
-    color: colors.textSecondary,
-    marginTop: 6,
+    lineHeight: 22,
+    color: colors.muted,
   },
-  deleteButton: {
-    padding: 8,
-    marginLeft: 12,
+  footer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: 12,
+  },
+  updated: {
+    fontSize: 12,
+    color: colors.muted,
+  },
+  openLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
   },
 });

@@ -14,7 +14,19 @@ study set library, and account settings.
 2. Copy `.env.example` to `.env` and fill in your Supabase project URL and
    publishable key.
 
-3. Start the app
+3. Apply the database migrations in `supabase/migrations/` to your Supabase
+   project, in filename order. Run them from the Supabase Dashboard SQL Editor,
+   or link the project and push with the CLI:
+
+   ```bash
+   npx supabase link --project-ref <your-project-ref>
+   npx supabase db push
+   ```
+
+   The migrations create the schema, RLS policies, the `profiles` signup
+   trigger, and the private `study-materials` storage bucket.
+
+4. Start the app
 
    ```bash
    npx expo start
@@ -25,8 +37,18 @@ study set library, and account settings.
 - `src/app/` — Expo Router routes (`_layout.tsx` files define navigators)
 - `src/components/` — reusable UI components
 - `src/context/` — auth state provider
+- `src/features/` — data queries and actions grouped by feature
+- `src/providers/` — app-wide providers (TanStack Query)
 - `src/constants/` — theme tokens
-- `src/lib/` — Supabase client
+- `src/lib/` — Supabase client, navigation options, API helpers
+- `supabase/migrations/` — database schema, RLS, and storage setup
+
+## Current scope
+
+- Email/password auth, a persisted study-set library, and PDF uploads to
+  Supabase Storage.
+- PDF text processing and the AI study modes require the study server and are
+  the next phase.
 
 ## Scripts
 

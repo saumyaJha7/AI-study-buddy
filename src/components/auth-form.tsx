@@ -83,14 +83,13 @@ export function AuthForm() {
     <View style={styles.container}>
       <View style={styles.card}>
         <View style={styles.header}>
-          <Text style={styles.icon}>🎓</Text>
+          <Text style={styles.brand}>STUDY BUDDY</Text>
           <Text style={styles.title}>
-            {isSignUp ? 'Create an Account' : 'Welcome Back'}
+            {isSignUp ? 'A fresh start.\nA clearer mind.' : 'Welcome back.\nFind your focus.'}
           </Text>
           <Text style={styles.subtitle}>
-            {isSignUp
-              ? 'Sign up to start learning with your AI Study Buddy'
-              : 'Sign in to access your study materials'}
+            Your notes, connected. Your ideas, understood. A calmer way to
+            learn.
           </Text>
         </View>
 
@@ -111,7 +110,7 @@ export function AuthForm() {
           <TextInput
             style={styles.input}
             placeholder="you@example.com"
-            placeholderTextColor="#64748b"
+            placeholderTextColor={colors.muted}
             value={email}
             onChangeText={(text) => {
               setEmail(text);
@@ -134,7 +133,7 @@ export function AuthForm() {
             ref={passwordInputRef}
             style={styles.input}
             placeholder="••••••••"
-            placeholderTextColor="#64748b"
+            placeholderTextColor={colors.muted}
             value={password}
             onChangeText={(text) => {
               setPassword(text);
@@ -161,7 +160,7 @@ export function AuthForm() {
           disabled={loading}
           onPress={handleSubmit}>
           {loading ? (
-            <ActivityIndicator color="#151618" />
+            <ActivityIndicator color={colors.primaryForeground} />
           ) : (
             <Text style={styles.submitButtonText}>
               {isSignUp ? 'Sign Up' : 'Sign In'}
@@ -212,13 +211,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
-  icon: {
-    fontSize: 40,
-    marginBottom: 8,
+  brand: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 1.6,
+    color: colors.primary,
+    marginBottom: 10,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 28,
+    fontWeight: '700',
+    lineHeight: 36,
+    letterSpacing: -0.4,
     color: colors.textPrimary,
     textAlign: 'center',
   },
@@ -226,8 +230,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
-    marginTop: 6,
-    lineHeight: 20,
+    marginTop: 10,
+    lineHeight: 22,
   },
   formGroup: {
     gap: 8,
@@ -235,11 +239,11 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#cbd5e1',
+    color: colors.textSecondary,
   },
   input: {
     backgroundColor: colors.input,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.inputBorder,
     paddingHorizontal: 16,
@@ -249,7 +253,7 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     backgroundColor: colors.accent,
-    borderRadius: 12,
+    borderRadius: 16,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 8,
@@ -273,23 +277,23 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   togglePrompt: {
-    color: '#94a3b8',
+    color: colors.muted,
     fontSize: 14,
   },
   toggleLink: {
-    color: '#F5C29E',
+    color: colors.primary,
     fontSize: 14,
     fontWeight: '700',
   },
   errorBox: {
     backgroundColor: '#451a1a',
-    borderColor: '#ef4444',
+    borderColor: colors.danger,
     borderWidth: 1,
     borderRadius: 10,
     padding: 12,
   },
   errorText: {
-    color: '#fca5a5',
+    color: colors.danger,
     fontSize: 13,
     lineHeight: 18,
   },
