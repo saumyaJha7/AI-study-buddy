@@ -1,3 +1,4 @@
+import { STUDY_MATERIALS_BUCKET } from '@/constants/storage';
 import { ensureProfile } from '@/features/auth/profile';
 import { supabase } from '@/lib/supabase';
 
@@ -54,6 +55,30 @@ export async function deleteStudySet(id: string) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
+
+  const { data: sources, error: sourcesError } = await supabase
+    .from('sources')
+    .select('storage_path')
+    .eq('study_set_id', id)
+    .eq('user_id', user.id);
+
+  if (sourcesError) throw sourcesError;
+
+  const prefix = `${user.id}/${id}/`;
+  const paths = (sources ?? [])
+    .map((source) => source.storage_path)
+    .filter(
+      (path): path is string =>
+        typeof path === 'string' && path.startsWith(prefix)
+    );
+
+  if (paths.length > 0) {
+    const { error: storageError } = await supabase.storage
+      .from(STUDY_MATERIALS_BUCKET)
+      .remove(paths);
+
+    if (storageError) throw storageError;
+  }
 
   const { error } = await supabase
     .from('study_sets')

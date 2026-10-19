@@ -2,10 +2,10 @@ import * as DocumentPicker from 'expo-document-picker';
 import { Platform } from 'react-native';
 
 import { ensureProfile } from '@/features/auth/profile';
+import { STUDY_MATERIALS_BUCKET } from '@/constants/storage';
 import { supabase } from '@/lib/supabase';
 import type { Source } from './query';
 
-const BUCKET = 'study-materials';
 const MAX_PDF_BYTES = 20 * 1024 * 1024;
 
 export async function pickAndUploadPdf(
@@ -86,7 +86,7 @@ export async function pickAndUploadPdf(
     if (!uploadBody) throw new Error('Could not read the selected PDF.');
 
     const { error: uploadError } = await supabase.storage
-      .from(BUCKET)
+      .from(STUDY_MATERIALS_BUCKET)
       .upload(storagePath, uploadBody, { contentType: 'application/pdf' });
 
     if (uploadError) throw uploadError;
@@ -107,7 +107,7 @@ export async function pickAndUploadPdf(
 export async function deleteSource(source: Source) {
   if (source.storage_path) {
     const { error: storageError } = await supabase.storage
-      .from(BUCKET)
+      .from(STUDY_MATERIALS_BUCKET)
       .remove([source.storage_path]);
 
     if (storageError) throw storageError;
