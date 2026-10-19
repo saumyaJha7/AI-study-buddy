@@ -1,10 +1,8 @@
+import { ensureProfile } from '@/features/auth/profile';
 import { supabase } from '@/lib/supabase';
 
 export async function createStudySet(title: string, description?: string) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  const user = await ensureProfile();
 
   const { data, error } = await supabase
     .from('study_sets')
