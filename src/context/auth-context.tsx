@@ -10,12 +10,7 @@ type AuthContextType = {
   signOut: () => Promise<{ error: Error | null }>;
 };
 
-const AuthContext = createContext<AuthContextType>({
-  session: null,
-  user: null,
-  loading: true,
-  signOut: async () => ({ error: null }),
-});
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);

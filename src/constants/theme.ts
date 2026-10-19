@@ -9,7 +9,6 @@ export const colors = {
   textMuted: '#7c838d',
   accent: '#F5C29E',
   accentText: '#151618',
-  danger: '#f87171',
   tabBar: '#101411',
   tabBarBorder: '#171c18',
   tabInactive: '#8E988D',

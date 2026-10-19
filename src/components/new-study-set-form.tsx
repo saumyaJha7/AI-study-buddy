@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   Keyboard,
   Pressable,
@@ -18,6 +18,7 @@ interface NewStudySetFormProps {
 export function NewStudySetForm({ onCreate, onCancel }: NewStudySetFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const descriptionInputRef = useRef<TextInput>(null);
 
   const handleCreate = () => {
     const trimmed = title.trim();
@@ -46,9 +47,11 @@ export function NewStudySetForm({ onCreate, onCancel }: NewStudySetFormProps) {
         onChangeText={setTitle}
         autoFocus
         returnKeyType="next"
+        onSubmitEditing={() => descriptionInputRef.current?.focus()}
       />
 
       <TextInput
+        ref={descriptionInputRef}
         style={[styles.input, styles.inputDescription]}
         placeholder="Description (optional)"
         placeholderTextColor={colors.textMuted}
@@ -61,6 +64,7 @@ export function NewStudySetForm({ onCreate, onCancel }: NewStudySetFormProps) {
 
       <View style={styles.actions}>
         <Pressable
+          accessibilityRole="button"
           style={({ pressed }) => [
             styles.createButton,
             pressed && styles.buttonPressed,
@@ -72,6 +76,7 @@ export function NewStudySetForm({ onCreate, onCancel }: NewStudySetFormProps) {
         </Pressable>
 
         <Pressable
+          accessibilityRole="button"
           style={({ pressed }) => [
             styles.cancelButton,
             pressed && { opacity: 0.7 },

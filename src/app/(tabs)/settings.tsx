@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors } from '@/constants/theme';
@@ -6,6 +6,13 @@ import { useAuth } from '@/context/auth-context';
 
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      Alert.alert('Unable to sign out', error.message);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
@@ -36,11 +43,12 @@ export default function SettingsScreen() {
         </View>
 
         <Pressable
+          accessibilityRole="button"
           style={({ pressed }) => [
             styles.signOutButton,
             pressed && styles.buttonPressed,
           ]}
-          onPress={() => signOut()}>
+          onPress={handleSignOut}>
           <Text style={styles.signOutText}>Sign out</Text>
         </Pressable>
       </ScrollView>

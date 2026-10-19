@@ -22,9 +22,16 @@ export function StudySetCard({ studySet, onDelete }: StudySetCardProps) {
         <Text style={styles.title} numberOfLines={1}>
           {studySet.title}
         </Text>
+        {studySet.description ? (
+          <Text style={styles.description} numberOfLines={2}>
+            {studySet.description}
+          </Text>
+        ) : null}
         <Text style={styles.updated}>Updated {studySet.updatedAt}</Text>
       </View>
       <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Delete ${studySet.title}`}
         hitSlop={12}
         onPress={() => onDelete(studySet.id)}
         style={({ pressed }) => [styles.deleteButton, pressed && { opacity: 0.6 }]}>
@@ -59,6 +66,12 @@ const styles = StyleSheet.create({
   updated: {
     fontSize: 13,
     color: colors.textMuted,
+    marginTop: 6,
+  },
+  description: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.textSecondary,
     marginTop: 6,
   },
   deleteButton: {

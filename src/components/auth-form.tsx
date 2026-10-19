@@ -1,8 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -20,6 +18,7 @@ export function AuthForm() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
+  const passwordInputRef = useRef<TextInput>(null);
 
   const handleSubmit = async () => {
     if (!email.trim() || !password.trim()) {
@@ -27,7 +26,7 @@ export function AuthForm() {
       return;
     }
 
-    if (password.length < 6) {
+    if (isSignUp && password.length < 6) {
       setErrorMessage('Password must be at least 6 characters long.');
       return;
     }
@@ -48,6 +47,11 @@ export function AuthForm() {
         } else if (data.session) {
           // Immediately signed in (if email confirmation is turned off in Supabase)
           setInfoMessage('Account created and signed in successfully!');
+        } else if (data.user?.identities?.length === 0) {
+          // Supabase intentionally obscures whether an account already exists
+          setErrorMessage(
+            'An account with this email already exists. Try signing in instead.'
+          );
         } else if (data.user) {
           // Email confirmation is required
           setInfoMessage(
@@ -76,9 +80,7 @@ export function AuthForm() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.card}>
         <View style={styles.header}>
           <Text style={styles.icon}>🎓</Text>
@@ -93,13 +95,13 @@ export function AuthForm() {
         </View>
 
         {errorMessage ? (
-          <View style={styles.errorBox}>
+          <View style={styles.errorBox} accessibilityLiveRegion="polite">
             <Text style={styles.errorText}>{errorMessage}</Text>
           </View>
         ) : null}
 
         {infoMessage ? (
-          <View style={styles.infoBox}>
+          <View style={styles.infoBox} accessibilityLiveRegion="polite">
             <Text style={styles.infoText}>{infoMessage}</Text>
           </View>
         ) : null}
@@ -118,12 +120,18 @@ export function AuthForm() {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
+            autoComplete="email"
+            textContentType="emailAddress"
+            editable={!loading}
+            returnKeyType="next"
+            onSubmitEditing={() => passwordInputRef.current?.focus()}
           />
         </View>
 
         <View style={styles.formGroup}>
           <Text style={styles.label}>Password</Text>
           <TextInput
+            ref={passwordInputRef}
             style={styles.input}
             placeholder="••••••••"
             placeholderTextColor="#64748b"
@@ -135,10 +143,16 @@ export function AuthForm() {
             secureTextEntry
             autoCapitalize="none"
             autoCorrect={false}
+            autoComplete={isSignUp ? 'new-password' : 'current-password'}
+            textContentType={isSignUp ? 'newPassword' : 'password'}
+            editable={!loading}
+            returnKeyType="done"
+            onSubmitEditing={handleSubmit}
           />
         </View>
 
         <Pressable
+          accessibilityRole="button"
           style={({ pressed }) => [
             styles.submitButton,
             pressed && styles.buttonPressed,
@@ -162,6 +176,7 @@ export function AuthForm() {
               : "Don't have an account yet?"}
           </Text>
           <Pressable
+            accessibilityRole="button"
             onPress={() => {
               setIsSignUp(!isSignUp);
               setErrorMessage(null);
@@ -173,7 +188,7 @@ export function AuthForm() {
           </Pressable>
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

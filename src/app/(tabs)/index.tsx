@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import {
+  Alert,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -9,7 +10,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import type { ScrollView as ScrollViewType } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { NewStudySetForm } from '@/components/new-study-set-form';
@@ -17,7 +17,7 @@ import { StudySetCard, type StudySet } from '@/components/study-set-card';
 import { colors } from '@/constants/theme';
 
 export default function LibraryScreen() {
-  const scrollViewRef = useRef<ScrollViewType>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const [studySets, setStudySets] = useState<StudySet[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -42,13 +42,27 @@ export default function LibraryScreen() {
 
   const handleOpenForm = () => {
     setIsFormOpen(true);
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 150);
   };
 
   const handleDeleteStudySet = (id: string) => {
-    setStudySets((prev) => prev.filter((item) => item.id !== id));
+    const studySet = studySets.find((item) => item.id === id);
+
+    Alert.alert(
+      'Delete study set',
+      studySet
+        ? `"${studySet.title}" will be permanently deleted.`
+        : 'This study set will be permanently deleted.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            setStudySets((prev) => prev.filter((item) => item.id !== id));
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -77,12 +91,16 @@ export default function LibraryScreen() {
           </Text>
 
           {isFormOpen ? (
-            <NewStudySetForm
-              onCreate={handleCreateStudySet}
-              onCancel={() => setIsFormOpen(false)}
-            />
+            <View
+              onLayout={() => scrollViewRef.current?.scrollToEnd({ animated: true })}>
+              <NewStudySetForm
+                onCreate={handleCreateStudySet}
+                onCancel={() => setIsFormOpen(false)}
+              />
+            </View>
           ) : (
             <Pressable
+              accessibilityRole="button"
               style={({ pressed }) => [
                 styles.primaryButton,
                 pressed && styles.buttonPressed,
